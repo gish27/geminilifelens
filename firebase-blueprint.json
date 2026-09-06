@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "Interaction": {
+      "title": "Interaction",
+      "description": "User journal entry or multi-turn reflection session with Gemini",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique interaction identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the authenticated user who owns this interaction"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title or topic of the journal reflection"
+        },
+        "messages": {
+          "type": "array",
+          "description": "Array of conversation turns between user and Gemini"
+        },
+        "summary": {
+          "type": "string",
+          "description": "AI generated synthesis or actionable takeaway"
+        },
+        "mode": {
+          "type": "string",
+          "description": "Interaction mode: reflection, summary, brainstorm, or chat"
+        },
+        "location": {
+          "type": "object",
+          "description": "Location data securely attached to the journal entry",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" },
+            "name": { "type": "string" },
+            "address": { "type": "string" },
+            "placeId": { "type": "string" }
+          }
+        },
+        "notificationSent": {
+          "type": "boolean",
+          "description": "Flag indicating if an external notification was dispatched"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["id", "userId", "messages", "createdAt"]
+    },
+    "AdminRole": {
+      "title": "AdminRole",
+      "description": "Role-based access control definition for elevated administrative users",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user with administrative access"
+        },
+        "role": {
+          "type": "string",
+          "description": "The assigned role, e.g. admin"
+        },
+        "assignedAt": {
+          "type": "string",
+          "description": "ISO timestamp of when the role was granted"
+        }
+      },
+      "required": ["userId", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/interactions/{interactionId}": {
+      "schema": "Interaction",
+      "description": "User-isolated journal entries and multi-turn reflections"
+    },
+    "/roles_admin/{userId}": {
+      "schema": "AdminRole",
+      "description": "Authoritative admin permissions lookup"
+    }
+  }
+}
+

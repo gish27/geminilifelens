@@ -1,0 +1,6 @@
+{
+  "name": "Gemini LifeLens",
+  "description": "A secure personal AI journal and memory system powered by Gemini AI and Cloud Firestore for multi-turn reflections, summaries, and persistent insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
