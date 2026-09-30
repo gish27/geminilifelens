@@ -416,6 +416,57 @@ Run the following checks to confirm production readiness:
 
 ---
 
+## Security Advisory & Secret Alert Resolution (GitHub Alert Remediation)
+
+### Incident Context: Google API Key Detected in `firebase-applet-config.json`
+When committing project files to a remote git repository (e.g., `gish27/geminilifelens` commit `144b9955`), GitHub Secret Scanning flags the `apiKey` field in `firebase-applet-config.json` (`AIzaSy...`).
+
+Even though Firebase Web Client API keys identify a project and are not traditional private secrets, committing them into public git repositories triggers automated secret scanning alerts and leaves the key vulnerable to quota exhaustion if unrestricted.
+
+### Remediation Protocol
+
+#### 1. Untrack `firebase-applet-config.json` from Git
+Run the following commands in your local repository clone to delete the file from git tracking without deleting it from your local workspace:
+
+```bash
+# Untrack the sensitive config file from git
+git rm --cached firebase-applet-config.json
+
+# Commit the removal
+git commit -m "security: remove firebase-applet-config.json from git tracking"
+
+# Push to your GitHub repository
+git push origin main
+```
+
+#### 2. Rotate the Exposed Google API Key
+1. Navigate to the **[Google Cloud Console Credentials Page](https://console.cloud.google.com/apis/credentials?project=citric-rex-w18qq)**.
+2. Locate the exposed API Key (`AIzaSyChsatZs3B5a2iaJpfiJzJzZase1Q6EvYU`).
+3. Click **+ CREATE CREDENTIALS** > **API key** to generate a fresh, replacement API key.
+4. Update your local `.env` or `firebase-applet-config.json` with the new key.
+5. In Google Cloud Console, click the three dots next to the old exposed key and select **Delete credential** (or revoke it) once your app is verified with the new key.
+
+#### 3. Enforce API Key Restrictions (Hardening)
+To prevent unauthorized use even if a key is discovered:
+1. Open the replacement API key in **Google Cloud Console > Credentials**.
+2. Under **Application restrictions**, choose **Websites (HTTP referrers)**:
+   - `https://ais-pre-axevvu52ljm75iwotj2dmd-513733059821.asia-southeast1.run.app/*`
+   - `https://ais-dev-axevvu52ljm75iwotj2dmd-513733059821.asia-southeast1.run.app/*`
+   - `http://localhost:*/*`
+3. Under **API restrictions**, select **Restrict key**:
+   - Check **Firebase Authentication API**
+   - Check **Cloud Firestore API**
+   - Leave all other APIs (Generative Language, Compute, Billing, etc.) unselected.
+4. Click **Save**.
+
+#### 4. Resolve the GitHub Secret Scanning Alert
+1. In your GitHub repository (`https://github.com/gish27/geminilifelens`), click on the **Security** tab.
+2. Select **Secret scanning alerts** from the left navigation.
+3. Locate the alert for `firebase-applet-config.json#L4` (commit `144b9955`).
+4. Click **Close alert as** > **Revoked** (after deleting the old key in Cloud Console) or **Fixed in commit**.
+
+---
+
 ## Troubleshooting
 
 - **Error: `Missing GEMINI_API_KEY environment variable`**
@@ -426,3 +477,4 @@ Run the following checks to confirm production readiness:
 - **Error: `Missing or insufficient permissions (Firestore)`**
   - Verify that the user is signed in with a valid Google account.
   - Verify that `firestore.rules` has been deployed and enforces `request.auth.uid == userId`.
+

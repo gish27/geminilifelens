@@ -401,6 +401,18 @@ async function startServer() {
     });
   });
 
+  // 4b. Firebase Public Client Configuration Endpoint
+  app.get('/api/firebase/config', (_req: Request, res: Response) => {
+    // Returns non-sensitive public web client configuration identifiers
+    res.json({
+      projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || 'citric-rex-w18qq',
+      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'citric-rex-w18qq.firebaseapp.com',
+      firestoreDatabaseId: process.env.VITE_FIREBASE_DATABASE_ID || 'ai-studio-f81661e7-f829-49ca-96d9-b9527ecc8c37',
+      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || 'citric-rex-w18qq.firebasestorage.app',
+      hasApiKey: Boolean(process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY),
+    });
+  });
+
   app.post('/api/maps/geocode', async (req: Request, res: Response) => {
     try {
       const data = req.body && typeof req.body === 'object' ? req.body : {};

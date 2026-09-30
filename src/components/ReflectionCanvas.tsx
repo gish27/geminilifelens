@@ -63,6 +63,7 @@ export const ReflectionCanvas: React.FC<ReflectionCanvasProps> = ({
   onUpdateTitle,
   onChangeMode,
   onGenerateSummary,
+  onUpdateLocation,
   isLoading,
   onToggleSidebar,
   isSaving,

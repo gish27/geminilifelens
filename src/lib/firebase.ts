@@ -26,11 +26,23 @@ import {
   OperationType,
 } from '../types';
 
+// Resolve Firebase configuration: Prioritize environment variables (Vite VITE_*), fallback to local config file
+const metaEnv = (import.meta as any).env || {};
+const resolvedFirebaseConfig = {
+  apiKey: metaEnv.VITE_FIREBASE_API_KEY || (firebaseConfig as any)?.apiKey || '',
+  authDomain: metaEnv.VITE_FIREBASE_AUTH_DOMAIN || (firebaseConfig as any)?.authDomain || '',
+  projectId: metaEnv.VITE_FIREBASE_PROJECT_ID || (firebaseConfig as any)?.projectId || '',
+  storageBucket: metaEnv.VITE_FIREBASE_STORAGE_BUCKET || (firebaseConfig as any)?.storageBucket || '',
+  messagingSenderId: metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || (firebaseConfig as any)?.messagingSenderId || '',
+  appId: metaEnv.VITE_FIREBASE_APP_ID || (firebaseConfig as any)?.appId || '',
+  firestoreDatabaseId: metaEnv.VITE_FIREBASE_DATABASE_ID || (firebaseConfig as any)?.firestoreDatabaseId || '(default)',
+};
+
 // Initialize Firebase App
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(resolvedFirebaseConfig);
 
 // CRITICAL: Initialize Firestore with custom database ID from config
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, resolvedFirebaseConfig.firestoreDatabaseId);
 
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
