@@ -8,7 +8,7 @@ Every journal entry, multi-turn AI reflection, structured memory, and synthesis 
 
 ## 🌐 Public Deployed Application
 
-- **Live Application URL**: [https://ais-pre-axevvu52ljm75iwotj2dmd-513733059821.asia-southeast1.run.app](https://ais-pre-axevvu52ljm75iwotj2dmd-513733059821.asia-southeast1.run.app)
+- **Live Application URL**: https://geminilifelens.ai.studio/
 - **Development Service URL**: [https://ais-dev-axevvu52ljm75iwotj2dmd-513733059821.asia-southeast1.run.app](https://ais-dev-axevvu52ljm75iwotj2dmd-513733059821.asia-southeast1.run.app)
 - **Required Cloud Run Label**:
   ```yaml
