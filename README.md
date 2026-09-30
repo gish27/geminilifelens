@@ -135,6 +135,10 @@ gcloud services enable \
 3. Enable **Google** as a Sign-in provider. Fill in your project support email and save.
 4. Under **Settings > Authorized domains**, ensure your Cloud Run domain (e.g. `*.run.app`) and `localhost` are listed.
 5. In **Project Settings > General**, register a Web App (e.g., `gemini-lifelens-web`) and copy the Firebase configuration credentials.
+6. Non-sensitive web app identifiers (`projectId`, `appId`, `authDomain`, `firestoreDatabaseId`, etc.) live in `firebase-applet-config.json`. Its `apiKey` field is intentionally empty — **never commit an API key to this file**. The Firebase browser API key is supplied at build time via `VITE_FIREBASE_API_KEY` (see [Environment Configuration](#environment-configuration)).
+7. In **Google Cloud Console > APIs & Services > Credentials**, restrict the Firebase browser key:
+   - **Application restrictions**: HTTP referrers — your Cloud Run domain (e.g. `https://<service>-<hash>.<region>.run.app/*`), your Firebase auth domain, and `http://localhost:3000/*` for local development.
+   - **API restrictions**: only the APIs the web app needs (e.g. Identity Toolkit API, Token Service API, Cloud Firestore API).
 
 ---
 
@@ -233,13 +237,9 @@ gcloud secrets add-iam-policy-binding GEMINI_API_KEY \
 3. Configure environment variables in `.env`:
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
-   VITE_FIREBASE_API_KEY=your_firebase_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_API_KEY=your_restricted_firebase_browser_key
    ```
+   Copy `.env.example` to `.env` as a starting point (`.env` is git-ignored). Other `VITE_FIREBASE_*` variables are optional overrides for values already in `firebase-applet-config.json`. If `VITE_FIREBASE_API_KEY` is missing, the client fails fast with a `FirebaseConfigError` naming the missing variable.
 
 4. Start the development server (runs full-stack Express + Vite on port 3000):
    ```bash
@@ -254,13 +254,19 @@ gcloud secrets add-iam-policy-binding GEMINI_API_KEY \
 
 | Variable | Scope | Description |
 | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Server-Side Only | Google Gen AI API key. Never exposed to the client. |
-| `VITE_FIREBASE_API_KEY` | Client-Side | Public Firebase web configuration key for GSI auth. |
-| `VITE_FIREBASE_AUTH_DOMAIN`| Client-Side | Firebase Auth domain. |
-| `VITE_FIREBASE_PROJECT_ID` | Client-Side | Google Cloud / Firebase Project ID. |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Client-Side | Cloud Storage bucket reference. |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Client-Side | Firebase messaging sender identifier. |
-| `VITE_FIREBASE_APP_ID` | Client-Side | Firebase web application identifier. |
+| `GEMINI_API_KEY` | Server-Side Only (secret) | Google Gen AI API key. Never exposed to the client. Store in Secret Manager. |
+| `GOOGLE_MAPS_API_KEY` | Server-Side Only (secret) | Maps Geocoding key used only by `/api/maps/*`. Never exposed to the client. |
+| `VITE_FIREBASE_API_KEY` | Client-Side, **build time** (required) | Public Firebase browser key for Auth/Firestore. Embedded in the JS bundle, so it must be restricted by HTTP referrer and API in Google Cloud Console. Never commit it. |
+| `VITE_FIREBASE_AUTH_DOMAIN`| Client-Side, build time (optional) | Overrides `authDomain` in `firebase-applet-config.json`. |
+| `VITE_FIREBASE_PROJECT_ID` | Client-Side, build time (optional) | Overrides `projectId`. |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Client-Side, build time (optional) | Overrides `storageBucket`. |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Client-Side, build time (optional) | Overrides `messagingSenderId`. |
+| `VITE_FIREBASE_APP_ID` | Client-Side, build time (optional) | Overrides `appId`. |
+| `VITE_FIREBASE_FIRESTORE_DATABASE_ID` | Client-Side, build time (optional) | Overrides `firestoreDatabaseId`. |
+
+> **Public vs. secret keys:** Vite only exposes variables prefixed with `VITE_` to the browser bundle. The Firebase browser key is designed to be public but must be restricted. `GEMINI_API_KEY` and `GOOGLE_MAPS_API_KEY` are secrets — never rename them with a `VITE_` prefix or reference them from `src/`.
+
+Run `npm test` to verify the Firebase config resolution (including the missing-key error) and that `firebase-applet-config.json` contains no committed Google API key.
 
 ---
 
@@ -315,8 +321,11 @@ gcloud run deploy gemini-lifelens \
   --region us-central1 \
   --allow-unauthenticated \
   --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest" \
+  --set-build-env-vars="VITE_FIREBASE_API_KEY=<your-restricted-firebase-browser-key>" \
   --port 3000
 ```
+
+`VITE_FIREBASE_API_KEY` is consumed by `vite build`, so it must be available at **build** time (`--set-build-env-vars`, or exported in the environment before `npm run build` in other pipelines/AI Studio). Setting it only as a runtime env var on Cloud Run has no effect on the already-built client bundle.
 
 ### 2. Apply Mandatory Competition Verification Label
 To satisfy verification for the Cloud Run AI Challenge, apply the required service label:

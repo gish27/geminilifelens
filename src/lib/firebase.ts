@@ -18,13 +18,17 @@ import {
   onSnapshot,
   getDocFromServer,
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import firebaseFileConfig from '../../firebase-applet-config.json';
+import { resolveFirebaseConfig } from './firebaseConfig';
 import {
   type Interaction,
   type FirestoreErrorInfo,
   type AuthErrorDetail,
   OperationType,
 } from '../types';
+
+// Resolve Firebase web config: non-sensitive fields from JSON, browser API key from VITE_FIREBASE_API_KEY
+const firebaseConfig = resolveFirebaseConfig(firebaseFileConfig, import.meta.env);
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
